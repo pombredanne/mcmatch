@@ -1,5 +1,5 @@
 '''
-Created on Jan 22, 2015
+General utility functions
 
 @author: niko
 '''

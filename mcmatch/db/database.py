@@ -1,3 +1,6 @@
+"""
+Base database class and pickle-based implementation
+"""
 import os, subprocess
 import collections, difflib
 import cPickle as pickle

@@ -1,10 +1,10 @@
-from mcmatch.db.types import FnFeature, Fn, Codeblock
-from mcmatch.x86 import jump_mnemonics
 '''
-Created on Dec 21, 2014
+Mnemonic Counter features
 
 @author: niko
 '''
+from mcmatch.db.types import FnFeature, Fn, Codeblock
+from mcmatch.x86 import expensive_mnemonics, jump_mnemonics, arith_mnemonics, bitop_mnemonics, call_mnemonics
 
 class MultiMnemonicCounterFeature(FnFeature):
   """Instruction Mnemonic Counter. Does not take operand types into account.
@@ -12,22 +12,7 @@ class MultiMnemonicCounterFeature(FnFeature):
   in http://www.agner.org/optimize/instruction_tables.pdf
   """
   group = None
-  # a couple of more-expensive operations taken from the agner's instruction
-  # list. Excluded are control-flow operations.
-  default_mnemonics = [
-      # x87 floating point instructions
-      'fsqrt', # quite fast, but with long-ish dep chain
-      'fsin', 'fcos', 'fsincos', 'fptan', 'fpatan',
-      # obscure, rarely used x86 integer operations
-      #'aam', 'das', 'daa',
-      # less obscure ones: (note, op time depends quite a lot on operand types
-      'div', 'idiv',
-      # logic:
-      'bsr', 'bsf',
-      # other
-      'sti', 'cpuid',
-      # MMX instructions
-      'divss', 'divps', 'sqrtss', 'sqrtps']
+  default_mnemonics = expensive_mnemonics
 
   def __init__(self, mnemonics=None, group=None, relative=False):
     self.table = {}
@@ -117,8 +102,6 @@ class MultiMnemonicCounterFeature(FnFeature):
 #     for k in self.table.keys():
 #       self.table[k] = (1.0 * self.table[k]) / s
 
-arith_mnemonics = ['add', 'sub', 'mul', 'div', 'imul', 'idiv',
-                   'inc', 'dec', 'neg', 'sar', 'sal', 'addl', 'subl']
 
 class ArithCounter(MultiMnemonicCounterFeature):
   def __init__(self, relative=False):
@@ -131,8 +114,6 @@ class ArithCounter(MultiMnemonicCounterFeature):
 #  def get_sql_table(self):
 #    return "arith_counter_relative_feature"
 
-bitop_mnemonics = ['shr', 'shl', 'shld', 'shrd', 'ror', 'rol',
-                   'rorl', 'roll', 'rcr', 'rcl', 'and', 'or', 'xor', 'not']
 
 class BitOpCounter(MultiMnemonicCounterFeature):
   def __init__(self, relative=False):
@@ -148,7 +129,6 @@ class JmpCounter(MultiMnemonicCounterFeature):
     super(JmpCounter, self).__init__(
        jump_mnemonics, group="jmp", relative=relative)
 
-call_mnemonics = ['call', 'callq', 'callf']
 class CallCounter(MultiMnemonicCounterFeature):
   def __init__(self, relative=False):
     super(CallCounter, self).__init__(call_mnemonics, group="call", relative=relative)

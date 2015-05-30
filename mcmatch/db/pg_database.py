@@ -1,5 +1,5 @@
 '''
-Created on Dec 16, 2014
+PostgreSQL database backend
 
 @author: niko
 '''

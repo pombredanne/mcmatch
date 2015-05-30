@@ -1,5 +1,5 @@
 '''
-Created on Apr 1, 2015
+Control-flow related features.
 
 @author: niko
 '''
@@ -7,6 +7,9 @@ from mcmatch.db.types import FnFeature, Codeblock, DisassemblyLine
 from scipy import mean, std
 
 class PseudoCyclofeatureComplexityFeature(FnFeature):
+    """Control-flow related features.
+
+    Contains mean and standarddeviation values for unconditional and conditional jumps."""
     columns_tpl = ['jumps_mean', 'jumps_stddev', 'jumps_mean_rel', 'jumps_stddev_rel']
 
     def __init__(self):

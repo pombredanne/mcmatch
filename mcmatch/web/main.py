@@ -1,5 +1,5 @@
 '''
-Created on Jan 5, 2015
+CherryPy application entry point
 
 @author: niko
 '''

@@ -1,5 +1,5 @@
 '''
-Created on Feb 19, 2015
+Machine-code text length
 
 @author: niko
 '''

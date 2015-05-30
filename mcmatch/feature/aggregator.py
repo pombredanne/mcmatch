@@ -1,5 +1,5 @@
 '''
-Created on Jan 6, 2015
+Multiple feature aggregation
 
 @author: niko
 '''
@@ -7,9 +7,15 @@ Created on Jan 6, 2015
 from mcmatch.db.types import FnFeature
 
 class FeatureAggregator(FnFeature):
+  """Class aggregating multiple features.
+  This class does not store it's features in the database
+  """
+
   def __init__(self, features):
+    """Create from a list of features"""
     self.features = features
     
+
   def get_kv(self):
     """Return a key/value pair describing this feature."""
     ret = []

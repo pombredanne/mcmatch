@@ -26,7 +26,7 @@ class ObjectInfo:
     @type object_path: str
     @param object_path: specifies the path to the object file.
     @param mtime: if not None, the modification time will be set from the object file on disk
-    @type normalize_path: list
+    @type function_list: list
     @param function_list: if not None, it must be a list of L{Fn} instances, describing the list of functions contained
                           in this object.
     @type normalize_path: bool
@@ -174,8 +174,7 @@ class Codeblock(object):
 
     def disassembly_from_text(self, text):
       """Set instances content from a block of text in gdb-format,
-      with newlines separated by "\n".
-      """
+      with newlines separated by the newline character."""
       if text is None:
         self.disassembly = []
       else:
@@ -481,6 +480,11 @@ class FnDiff(object):
       print vb, db[vb], "%3.1f%%" % (100*float(db[vb])/self.fnblen)
 
 class FnFeature(object):
+  """Base class for all features.
+  
+  Derived classes need to implement all public functions, except
+  get_sql_select.
+  """
   def __init__(self):
     pass
 
@@ -489,6 +493,7 @@ class FnFeature(object):
     raise NotImplementedError()
   
   def get_sql_table(self):
+    """Return this features table name"""
     raise NotImplementedError()
   
   def get_sql_columns(self, fq_select=True, fq_rename=False):
@@ -499,10 +504,13 @@ class FnFeature(object):
     raise NotImplementedError()
 
   def get_sql_contents(self):
+    """Return the calculated values as a list in the order given by
+    L{create_table_ddl}."""
     raise NotImplementedError()
 
   def _sql_select_apply_filter(self, function_text_id="function_text_id", in_repositories=None):
-    """
+    """Create a WHERE statement for the in_repositories parameter
+
     function_text_id should be the fully qualified name of the function_text_id column. The
     default value should be sufficient in non-ambigous conditions.
 
@@ -515,6 +523,19 @@ class FnFeature(object):
     return "", []
 
   def _sql_prep_cols(self, columns, sqltable, fq_select, fq_rename):
+    """Prepare a list of columns.
+
+    @type  columns: list
+    @param columns: list of columns
+    @type  sqltable: str
+    @param sqltable: table containing the columns
+    @type  fq_select: bool
+    @param fq_select: whether to use a fully qualified select (sqltable.column name)
+    @type  fq_rename: bool
+    @param fq_rename: whether to rename the output column to a fully qualified column name (sqltable_columnname)
+    
+    @return: the updated columns as list.
+    """
     if fq_select or fq_rename:
       if fq_select:
         columns = [sqltable + "." + c for c in columns]
@@ -523,6 +544,7 @@ class FnFeature(object):
     return columns
   
   def get_sql_select(self, in_repositories=None, include_signature=False):
+    """Return the SELECT statement for this feature"""
     statement = "SELECT function_text_id, "
     data_offset = 1
     if include_signature:
@@ -536,10 +558,15 @@ class FnFeature(object):
     return statement, i, data_offset
 
   def calculate(self, fn):
+    """Perform calculation on the given L{Codeblock} object and store results in this instance"""
     assert isinstance(fn, Codeblock)
     raise NotImplementedError()
     return None
 
   def create_table_ddl(self):
+    """Return the data definition for this feature, for example
+    
+    "feature_a integer, feature_b float"
+    """
     raise NotImplementedError()
   

@@ -1,9 +1,9 @@
-import logging
 '''
-Created on Dec 15, 2014
+CompilerOptions class and related functionality
 
 @author: niko
 '''
+import logging
 
 class CompilerOptions(object):
   """Class representing the compile time options of an object file.

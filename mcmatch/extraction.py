@@ -1,3 +1,7 @@
+"""
+Machine-code extraction from ELF files
+"""
+
 from mcmatch.db.types import Fn, ObjectInfo
 from mcmatch.db.pg_database import PgFunDB as DB
 import os, sys

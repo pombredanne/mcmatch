@@ -1,5 +1,5 @@
 '''
-Created on Jan 7, 2015
+HTML form abstraction
 
 @author: niko
 '''
