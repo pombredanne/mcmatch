@@ -1,0 +1,48 @@
+<html>
+<head>
+<title>mxmatch - {{ title }}</title>
+<script type="text/javascript" src="/js"></script>
+</head>
+<body>
+<a href="/">Start</a>
+<h1>mxmatch - {{ title }}</h1>
+
+Name: <tt>{{ fun.sig|e }}</tt><br />
+Length (lines): {{ fun.length() }}
+<br />
+Containing object: <a href='/obj?id={{ fun.object_id }}'>{{ fun.object_id }}</a><br />
+
+<h3>Disassembled:</h3>
+<a href="#" onclick="toggle_visibility('code'); toggle_visibility('codetv');" id='codetv'>show</a>
+<div id="code" style="display: none;">
+<a href="#" onclick="toggle_visibility('code'); toggle_visibility('codetv');">hide</a>
+<br />
+<tt>
+{% for row in fun.disassembly %}
+{{ row|e }}<br />
+{% endfor %}
+</tt>
+</div>
+
+<h3>Metric comparison</h3>
+<table>
+<tr>
+<th>function</th>
+<th>this</th>
+{% if cmetr %}
+<th>loaded</th>
+{% endif %}
+</tr>
+<tr>
+{% for m in metr_keys %}
+<th>{{ m }}</th>
+<td>{{ fmetr[m] }}</td>
+{% if cmetr %}
+<td>{{ cmetr[m] }}</td>
+{% endif %}
+</tr>
+{% endfor %}
+
+</table>
+</body>
+</html>

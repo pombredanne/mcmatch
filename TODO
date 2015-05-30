@@ -1,0 +1,6 @@
+- Make sure disassembly is only loaded when it's actually required.
+  (this is now a JOIN instead of a flat load)
+  Often the only reason this is in there is because get_shortinf() "needs" it,
+  but we probably want the text length cached somewhere anyway.
+
+- Mapping of function names to a function_text_id?

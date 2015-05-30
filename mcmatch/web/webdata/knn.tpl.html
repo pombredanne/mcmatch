@@ -1,0 +1,30 @@
+<html>
+<head>
+<title>mxmatch - {{ title }}</title>
+<script type="text/javascript" src="/js"></script>
+</head>
+<body>
+<a href="/">Start</a>
+<h1>mxmatch - {{ title }}</h1>
+
+<form action='/knn' method='get'>
+Options:<br />
+{{ form_inner }}
+
+<input type='submit' name='submit' value='start'></input>
+
+{% if plotsrc %}
+Plot: <img src='{{ plotsrc }}' />
+{% endif %}
+<br />
+<monospace>
+{% for res in result %}
+{{ res[0] }} {{ res[1] }} {{ res[2].get_html() }}
+{% endfor %}
+</monospace>
+<br />
+<input type='submit' name='graph' value='graph'></input>
+</form>
+
+</body>
+</html>

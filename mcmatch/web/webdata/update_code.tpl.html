@@ -1,0 +1,23 @@
+<html>
+<head>
+<title>mxmatch - {{ title }}</title>
+</head>
+<body>
+<a href="/">Start</a>
+<h1>mxmatch - {{ title }}</h1>
+
+Paste assembly here.
+<form method="POST" action="/update_code_recv">
+<textarea name="code" rows='30' cols='50'></textarea>
+<input type='submit' />
+</form>
+
+Or, choose a sample:
+<ul>
+  {% for f in samples %}
+  <li><a href='/update_code_sample?sample={{ f }}'>{{ f }}</a></li>
+  {% endfor %}
+</ul>
+
+</body>
+</html>

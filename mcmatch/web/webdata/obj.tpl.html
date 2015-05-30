@@ -1,0 +1,20 @@
+<html>
+<head>
+<title>mxmatch - {{ title }}</title>
+</head>
+<body>
+<a href="/">Start</a>
+<h1>mxmatch - {{ title }}</h1>
+
+Path: {{ obj.get_path()|e }}<br />
+Options: {{ obj.compileopts.get_shortinfo() }}<br />
+
+<h2>Known functions</h2>
+{{ functions|length }} total.<br />
+<monospace>
+{% for fun in functions %}
+<a href='/fn?id={{ fun.function_id }}'>{{ fun.sig }}</a> (size {{ fun.disassembly_nlines }})<br />
+{% endfor %}
+<br />
+</body>
+</html>

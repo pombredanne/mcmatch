@@ -1,0 +1,21 @@
+<html>
+<head>
+<title>mxmatch - {{ title }}</title>
+</head>
+<body>
+<a href="/">Start</a>
+<h1>mxmatch - {{ title }}</h1>
+
+<form action="/repos" method="GET">
+<input type="text" name="search" />
+<input type="submit" name="submit" value="search" />
+</form>
+
+<h2>Known functions</h2>
+<monospace>
+{% for rep in repos %}
+<a href='/repo/{{ rep }}'>{{ rep }}</a><br />
+{% endfor %}
+<br />
+</body>
+</html>

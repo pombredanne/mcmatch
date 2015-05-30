@@ -1,0 +1,16 @@
+<html>
+<head>
+<title>mxmatch - {{ title }}</title>
+</head>
+<body>
+<a href="/">Start</a>
+<h1>mxmatch - {{ title }}</h1>
+
+<h2>Objects in {{ reponame }}</h2>
+<monospace>
+{% for obj in objects %}
+<a href='/obj?id={{ obj.id }}'>{{ obj.get_path() }}</a><br />
+{% endfor %}
+<br />
+</body>
+</html>
