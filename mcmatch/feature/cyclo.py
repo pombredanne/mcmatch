@@ -3,10 +3,10 @@ Created on Apr 1, 2015
 
 @author: niko
 '''
-from mcmatch.db.types import FnMetric, Codeblock, DisassemblyLine
+from mcmatch.db.types import FnFeature, Codeblock, DisassemblyLine
 from scipy import mean, std
 
-class PseudoCyclometricComplexityMetric(FnMetric):
+class PseudoCyclofeatureComplexityFeature(FnFeature):
     columns_tpl = ['jumps_mean', 'jumps_stddev', 'jumps_mean_rel', 'jumps_stddev_rel']
 
     def __init__(self):
@@ -54,7 +54,7 @@ class PseudoCyclometricComplexityMetric(FnMetric):
       self.data = [self.num_cond_jumps, self.num_cond_jumps_rel] + _get_dict(self.cond_jump_distances) + _get_dict(self.uncond_jump_distances) + _get_dict(self.all_jump_distances)
     
     def get_sql_table(self):
-      return "metric_cyclo"
+      return "feature_cyclo"
     
     def get_sql_columns(self, fq_select=True, fq_rename=False):
       return self._sql_prep_cols(self.columns, self.get_sql_table(), fq_select, fq_rename)
@@ -69,6 +69,6 @@ class PseudoCyclometricComplexityMetric(FnMetric):
     def get_kv(self):
       return dict(zip(self.columns, self.get_sql_contents()))
 
-cyclo_metric = {
-  'cyclo': PseudoCyclometricComplexityMetric()
+cyclo_feature = {
+  'cyclo': PseudoCyclofeatureComplexityFeature()
 }

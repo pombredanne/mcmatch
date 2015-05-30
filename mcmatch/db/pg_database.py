@@ -6,10 +6,10 @@ Created on Dec 16, 2014
 import psycopg2, os
 from database import FunDB
 from types import Fn, ObjectInfo
-from mcmatch.db.types import FnMetric
+from mcmatch.db.types import FnFeature
 import numpy as np
 import logging
-from mcmatch.metric.aggregator import MetricAggregator
+from mcmatch.feature.aggregator import FeatureAggregator
 import hashlib
 from mcmatch.db.compileroptions import CompilerOptions
 
@@ -273,12 +273,12 @@ class PgFunDB(FunDB):
     return rows
 
   class FunctionTextQueryOptions:
-    def __init__(self, with_id=None, with_missing_metrics=None, include_disassembly=True):
+    def __init__(self, with_id=None, with_missing_features=None, include_disassembly=True):
       """Query filter for function texts.
       - with_id: int or [int]. Only tuples with these function_text_ids will be returned.
       - include_disassembly: Wether to include the full function text in the return value.
-      - with_missing_metrics: A list with FnMetric types. Return value will only include
-                              function texts where at least one metric is missing in the
+      - with_missing_features: A list with FnFeature types. Return value will only include
+                              function texts where at least one feature is missing in the
                               database.
       """
       self.with_id = with_id
@@ -289,7 +289,7 @@ class PgFunDB(FunDB):
         if not isinstance(self.with_id, list):
           raise Exception("Unexpected argument in 'id' field: %r" % (with_id,))
 
-      self.with_missing_metrics = with_missing_metrics
+      self.with_missing_features = with_missing_features
       self.include_disassembly = include_disassembly
       self.input_tuple = []
 
@@ -298,12 +298,12 @@ class PgFunDB(FunDB):
     def _prepare_where(self):
       """Return the "WHERE" part of the query, including the "WHERE"."""
       where = []
-      if self.with_missing_metrics:
-        missing_metric_where = []
-        for metric in self.with_missing_metrics:
-          assert isinstance(metric, FnMetric)
-          missing_metric_where.append("id NOT IN (SELECT function_text_id FROM " + metric.get_sql_table() + ")\n")
-        where.append(" OR ".join(missing_metric_where))
+      if self.with_missing_features:
+        missing_feature_where = []
+        for feature in self.with_missing_features:
+          assert isinstance(feature, FnFeature)
+          missing_feature_where.append("id NOT IN (SELECT function_text_id FROM " + feature.get_sql_table() + ")\n")
+        where.append(" OR ".join(missing_feature_where))
 
       if self.with_id:
         where.append("function_text.id = ANY(%s)")
@@ -334,15 +334,15 @@ class PgFunDB(FunDB):
       """helper function, returns the full SELECT statement"""
       return """SELECT %s FROM function_text %s""" % (self.field_list(), self.where())
 
-  def get_function_texts(self, with_id=None, with_missing_metrics=None, include_disassembly=True):
+  def get_function_texts(self, with_id=None, with_missing_features=None, include_disassembly=True):
     """returns a tuple (text_id, function signature, disassembly)"""
-    query = self.FunctionTextQueryOptions(with_id=with_id, with_missing_metrics=with_missing_metrics, include_disassembly=include_disassembly)
+    query = self.FunctionTextQueryOptions(with_id=with_id, with_missing_features=with_missing_features, include_disassembly=include_disassembly)
     cursor = self.conn.cursor()
     cursor.execute(query.full_statement(), query.data())
     return cursor.fetchall()
 
   def get_objectids_matching(self,
-                             has_metrics=None,
+                             has_features=None,
                              path_contains=None,
                              filename_contains=None,
                              filename_is=None,
@@ -350,9 +350,9 @@ class PgFunDB(FunDB):
                              path_is=None):
     where = []
     sql_input = []
-    #if has_metrics is not None:
-    #  where.append(" has_metrics = %s ")
-    #  sql_input.append(has_metrics)
+    #if has_features is not None:
+    #  where.append(" has_features = %s ")
+    #  sql_input.append(has_features)
     if path_contains is not None:
       where.append(" filepath ILIKE %s ")
       sql_input.append("%" + path_contains + "%")
@@ -516,19 +516,19 @@ class PgFunDB(FunDB):
       return None
     return obj.get_compileopts()
   
-  def store_metrics(self, function_text_id, metrics):
+  def store_features(self, function_text_id, features):
     cursor = self.conn.cursor()
     assert isinstance(function_text_id, int)
-    assert isinstance(metrics, FnMetric)
+    assert isinstance(features, FnFeature)
     
-    mntable = metrics.get_sql_table()
+    mntable = features.get_sql_table()
     
     cursor.execute("DELETE FROM " + mntable + " WHERE function_text_id = %s",
                    (function_text_id,))
     
     column_list = ("(function_text_id, " +
-      ",".join(metrics.get_sql_columns(fq_select=False)) + ")")
-    sql_values = metrics.get_sql_contents()
+      ",".join(features.get_sql_columns(fq_select=False)) + ")")
+    sql_values = features.get_sql_contents()
     value_list = "(%s, " + ",".join(["%s"]*len(sql_values)) + ")"
     value_tuple = tuple([function_text_id] + sql_values)
 
@@ -538,16 +538,16 @@ class PgFunDB(FunDB):
                    value_tuple)
 
 
-  def get_metrics_np(self, fnmetric, in_repositories=None, include_signature=True):
-    """returns a tuple (function_text_info, associated_metrics as numpy array).
-    function_text_info is a list with each entry corresponding to each row in associated_metrics.
+  def get_features_np(self, fnfeature, in_repositories=None, include_signature=True):
+    """returns a tuple (function_text_info, associated_features as numpy array).
+    function_text_info is a list with each entry corresponding to each row in associated_features.
     if include_signature is set to True, each entry in the list will be a tuple (function_text_id, function_signature),
       otherwise it will only be an integer.
     if in_repositories is not None, it should be either a string or a list of strings, describing (OR-connected) the
     repositories that should be selected.
     """
     # TODO this will cause problems on larger datasets.
-    assert isinstance(fnmetric, FnMetric)
+    assert isinstance(fnfeature, FnFeature)
     if in_repositories is not None:
       if isinstance(in_repositories, str):
         in_repositories = [in_repositories]
@@ -560,21 +560,21 @@ class PgFunDB(FunDB):
 
     sqltable = None
     has_view = False
-    if isinstance(fnmetric, MetricAggregator):
+    if isinstance(fnfeature, FeatureAggregator):
       has_view = True
       sqltable = 'aggregated_cluster_view'
-      select, inp, data_offset = fnmetric.get_sql_select(in_repositories=in_repositories, include_signature=include_signature)
+      select, inp, data_offset = fnfeature.get_sql_select(in_repositories=in_repositories, include_signature=include_signature)
       statement = ("CREATE TEMPORARY VIEW " + sqltable +" AS " + select)
       logger.debug(statement)
       cursor.execute(statement, (inp,))
     else:
       raise NotImplemented("this code path is currently unavailable")
-      sqltable, _ = fnmetric.get_sql_table()
+      sqltable, _ = fnfeature.get_sql_table()
 
     cursor.execute("SELECT COUNT(*) FROM " + sqltable)
     row = cursor.fetchone()
     num_rows = int(row[0])
-    num_cols = len(fnmetric.get_sql_columns())
+    num_cols = len(fnfeature.get_sql_columns())
 
     ids = []
     data = np.empty((num_rows, num_cols))
@@ -593,31 +593,31 @@ class PgFunDB(FunDB):
       cursor.execute("DROP VIEW " + sqltable)
     return (ids, data)
 
-  def recreate_metrics_table(self, fnmetric):
+  def recreate_features_table(self, fnfeature):
     # TODO allow class type as well (not just instance)
-    assert isinstance(fnmetric, FnMetric)
+    assert isinstance(fnfeature, FnFeature)
 
     cursor = self.conn.cursor()
-    table_name = fnmetric.get_sql_table()
+    table_name = fnfeature.get_sql_table()
 
     cursor.execute("DROP TABLE IF EXISTS " + table_name)
 
-    cts = ("CREATE TABLE " + table_name + " (" + fnmetric.create_table_ddl()
-                   + ") INHERITS(metrics)")
+    cts = ("CREATE TABLE " + table_name + " (" + fnfeature.create_table_ddl()
+                   + ") INHERITS(features)")
     logging.info(cts)
     cursor.execute(cts)
 
-  def delete_feature_data(self, fnmetric):
-    assert isinstance(fnmetric, FnMetric)
+  def delete_feature_data(self, fnfeature):
+    assert isinstance(fnfeature, FnFeature)
 
     cursor = self.conn.cursor()
-    table_name = fnmetric.get_sql_table()
+    table_name = fnfeature.get_sql_table()
 
     cursor.execute("DELETE FROM " + table_name)
 
-  def delete_stale_metrics(self):
+  def delete_stale_features(self):
     cursor = self.conn.cursor()
-    cursor.execute("DELETE FROM metrics WHERE function_text_id NOT IN (SELECT id FROM function_text)")
+    cursor.execute("DELETE FROM features WHERE function_text_id NOT IN (SELECT id FROM function_text)")
 
   def get_repository_names(self):
     cursor = self.conn.cursor()

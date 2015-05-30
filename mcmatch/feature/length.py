@@ -4,10 +4,10 @@ Created on Feb 19, 2015
 @author: niko
 '''
 
-from mcmatch.db.types import FnMetric, Codeblock
+from mcmatch.db.types import FnFeature, Codeblock
 
 
-class TextLengthMetric(FnMetric):
+class TextLengthFeature(FnFeature):
   l = 0
   
   def calculate(self, fn):
@@ -24,9 +24,9 @@ class TextLengthMetric(FnMetric):
     return [self.l]
   
   def get_sql_table(self):
-    return 'textlength_metric'
+    return 'textlength_feature'
   
   def create_table_ddl(self):
     return " textlength integer "
 
-textlength_metrics = { 'textlength' : TextLengthMetric() }
+textlength_features = { 'textlength' : TextLengthFeature() }

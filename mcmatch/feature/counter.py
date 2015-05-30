@@ -1,4 +1,4 @@
-from mcmatch.db.types import FnMetric, Fn, Codeblock
+from mcmatch.db.types import FnFeature, Fn, Codeblock
 from mcmatch.x86 import jump_mnemonics
 '''
 Created on Dec 21, 2014
@@ -6,7 +6,7 @@ Created on Dec 21, 2014
 @author: niko
 '''
 
-class MultiMnemonicCounterMetric(FnMetric):
+class MultiMnemonicCounterFeature(FnFeature):
   """Instruction Mnemonic Counter. Does not take operand types into account.
   A comparison of instructions by execution time/latency can be found
   in http://www.agner.org/optimize/instruction_tables.pdf
@@ -41,7 +41,7 @@ class MultiMnemonicCounterMetric(FnMetric):
       group = "expensive"
     self.group = group
 
-  def num_metrics(self):
+  def num_features(self):
     return len(self.mnemonics)
   
   def _get_mnemonics(self):
@@ -85,7 +85,7 @@ class MultiMnemonicCounterMetric(FnMetric):
     return [None]*len(mnemonics)
 
   def get_sql_table(self):
-    tblname = "metric_mncounter_" + self.group
+    tblname = "feature_mncounter_" + self.group
     if self.relative:
       return tblname + "_relative"
     return tblname
@@ -100,7 +100,7 @@ class MultiMnemonicCounterMetric(FnMetric):
     return "  " + ",\n  ".join(['mn_%s%s %s' % (x, suffix, dt) for x in self._get_mnemonics()])
 
 
-# class RelativeMultiMnemonicCounterMetric(MultiMnemonicCounterMetric):
+# class RelativeMultiMnemonicCounterFeature(MultiMnemonicCounterFeature):
 #   def create_table_ddl(self):
 #     return "  " + ",\n  ".join(['mn_r_%s float' % x for x in self._get_mnemonics()])
 #   
@@ -109,32 +109,32 @@ class MultiMnemonicCounterMetric(FnMetric):
 #     return self._sql_prep_cols(columns, self.get_sql_table(), fq_select, fq_rename)
 #   
 #   def get_sql_table(self):
-#     return "mnemonic_counter_relative_metric"
+#     return "mnemonic_counter_relative_feature"
 #   
 #   def calculate_from_histogram(self, histogram):
 #     s = sum(histogram.values())      
-#     MultiMnemonicCounterMetric.calculate_from_histogram(self, histogram)
+#     MultiMnemonicCounterFeature.calculate_from_histogram(self, histogram)
 #     for k in self.table.keys():
 #       self.table[k] = (1.0 * self.table[k]) / s
 
 arith_mnemonics = ['add', 'sub', 'mul', 'div', 'imul', 'idiv',
                    'inc', 'dec', 'neg', 'sar', 'sal', 'addl', 'subl']
 
-class ArithCounter(MultiMnemonicCounterMetric):
+class ArithCounter(MultiMnemonicCounterFeature):
   def __init__(self, relative=False):
     super(ArithCounter, self).__init__(arith_mnemonics, group="arith", relative=relative)
 
-#class RelativeArithCounter(RelativeMultiMnemonicCounterMetric):
+#class RelativeArithCounter(RelativeMultiMnemonicCounterFeature):
 #  def __init__(self):
 #    super(RelativeArithCounter, self).__init__(arith_mnemonics, group="arith")
 #
 #  def get_sql_table(self):
-#    return "arith_counter_relative_metric"
+#    return "arith_counter_relative_feature"
 
 bitop_mnemonics = ['shr', 'shl', 'shld', 'shrd', 'ror', 'rol',
                    'rorl', 'roll', 'rcr', 'rcl', 'and', 'or', 'xor', 'not']
 
-class BitOpCounter(MultiMnemonicCounterMetric):
+class BitOpCounter(MultiMnemonicCounterFeature):
   def __init__(self, relative=False):
     super(BitOpCounter, self).__init__(
       bitop_mnemonics, group="bitop", relative=relative)
@@ -142,22 +142,22 @@ class BitOpCounter(MultiMnemonicCounterMetric):
 
 
 
-class JmpCounter(MultiMnemonicCounterMetric):
+class JmpCounter(MultiMnemonicCounterFeature):
   def __init__(self, relative=False):
-    #TODO fix metrics
+    #TODO fix features
     super(JmpCounter, self).__init__(
        jump_mnemonics, group="jmp", relative=relative)
 
 call_mnemonics = ['call', 'callq', 'callf']
-class CallCounter(MultiMnemonicCounterMetric):
+class CallCounter(MultiMnemonicCounterFeature):
   def __init__(self, relative=False):
     super(CallCounter, self).__init__(call_mnemonics, group="call", relative=relative)
 
-class CounterSum(FnMetric):
+class CounterSum(FnFeature):
   def __init__(self, underlying, relative=False):
     self.underlying = underlying(relative=relative)
     self.relative = relative
-    assert isinstance(self.underlying, MultiMnemonicCounterMetric)
+    assert isinstance(self.underlying, MultiMnemonicCounterFeature)
 
     self.field_name = "sum_" + self.underlying.group
   
@@ -197,7 +197,7 @@ class JmpCounterSum(CounterSum):
 
 class ExpensiveCounterSum(CounterSum):
   def __init__(self, relative=False):
-    super(ExpensiveCounterSum, self).__init__(MultiMnemonicCounterMetric, relative=relative)
+    super(ExpensiveCounterSum, self).__init__(MultiMnemonicCounterFeature, relative=relative)
 
 class ArithCounterSum(CounterSum):
   def __init__(self, relative=False):
@@ -207,8 +207,8 @@ class BitOpCounterSum(CounterSum):
   def __init__(self, relative=False):
     super(BitOpCounterSum, self).__init__(BitOpCounter, relative=relative)
 
-counter_metrics = {
-  'expensive': MultiMnemonicCounterMetric(),
+counter_features = {
+  'expensive': MultiMnemonicCounterFeature(),
   'arithmetic': ArithCounter(),
   'logical': BitOpCounter(),
   'jumps': JmpCounter(),
@@ -217,7 +217,7 @@ counter_metrics = {
 
 #TODO: remove Sum() classes, replace with sum=True parameter
 # on construction instead.
-counter_sum_metrics = {
+counter_sum_features = {
   'expensive_sum' : ExpensiveCounterSum(),
   'arithmetic_sum' : ArithCounterSum(),
   'logical_sum' : BitOpCounterSum(),
@@ -225,15 +225,15 @@ counter_sum_metrics = {
   'call_sum' : CallCounterSum(),
 }
 
-relative_counter_metrics = {
-  'r_expensive' : MultiMnemonicCounterMetric(relative=True),             
+relative_counter_features = {
+  'r_expensive' : MultiMnemonicCounterFeature(relative=True),             
   'r_arith' : ArithCounter(relative=True),
   'r_logical': BitOpCounter(relative=True),
   'r_jumps' : JmpCounter(relative=True),
   'r_calls' : CallCounter(relative=True)
 }
 
-relative_counter_sum_metrics = {
+relative_counter_sum_features = {
   'r_expensive_sum' : ExpensiveCounterSum(relative=True),
   'r_arith_sum' : ArithCounterSum(relative=True),
   'r_logical_sum' : BitOpCounterSum(relative=True),

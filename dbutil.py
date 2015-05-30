@@ -2,10 +2,10 @@ from mcmatch.db.pg_database import PgFunDB as DB
 import logging
 import argparse
 
-from mcmatch.metric.counter import counter_metrics
+from mcmatch.feature.counter import counter_features
 
 def main():
-  available_metrics = counter_metrics.keys()
+  available_features = counter_features.keys()
   logging.basicConfig(level=logging.INFO)
 
   parser = argparse.ArgumentParser(description='perform delete actions between functions in the database')

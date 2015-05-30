@@ -9,9 +9,9 @@ matplotlib.use('Agg')
     
 import cherrypy, jinja2
 from mcmatch.db.types import Codeblock, ObjectInfo
-from mcmatch.metric.counter import counter_metrics
-from mcmatch.metric import all_metrics, grouped_metrics
-from mcmatch.metric.aggregator import MetricAggregator
+from mcmatch.feature.counter import counter_features
+from mcmatch.feature import all_features, grouped_features
+from mcmatch.feature.aggregator import FeatureAggregator
 from mcmatch.cluster import KNearestNeighbors, DistanceInfo, TransformPipeline
 from mcmatch.db.database import FunDB
 from mcmatch.db.pg_database import PgFunDB
@@ -73,7 +73,7 @@ class Root(object):
     cherrypy.session['code'] = code  # @UndefinedVariable
     raise HTTPRedirect('/')
 
-  def _make_metrics(self, code):
+  def _make_features(self, code):
     if code is None:
       return None
     if isinstance(code, Codeblock):
@@ -82,7 +82,7 @@ class Root(object):
       cb = Codeblock()
       cb.disassembly_from_text(code)
     # TODO sort this somehow
-    metr = MetricAggregator(all_metrics.values())
+    metr = FeatureAggregator(all_features.values())
     metr.calculate(cb)
     return metr.get_kv()
   
@@ -94,8 +94,8 @@ class Root(object):
     if not fun:
       raise cherrypy.HTTPError(404, "Function with ID %s not found" % id)
 
-    c_mt = self._make_metrics(self._optional_code())
-    f_mt = self._make_metrics(fun)
+    c_mt = self._make_features(self._optional_code())
+    f_mt = self._make_features(fun)
 
     template = env.get_template('fn.tpl.html')
     title = "showing function %d" % (fun.function_id)
@@ -170,11 +170,11 @@ class Root(object):
   def knn(self, submit=False, graph=False, **flags):
     code = self._require_code()
     
-    # build options for metrics
-    metrics = Group("metrics")
-    for metric_group in grouped_metrics:
-      for available_metric in sorted(grouped_metrics[metric_group].keys()):
-        metrics.add(CheckBox(available_metric), metric_group)
+    # build options for features
+    features = Group("features")
+    for feature_group in grouped_features:
+      for available_feature in sorted(grouped_features[feature_group].keys()):
+        features.add(CheckBox(available_feature), feature_group)
 
     preprocessing = Group("preprocessing")
     preprocessing.add(CheckBox('ftrscale', 'feature scaling'))
@@ -185,7 +185,7 @@ class Root(object):
     #preprocessing.add(CheckBox('nca', 'NCA'))
     
     form = Form()
-    form.addGroup(metrics)
+    form.addGroup(features)
     form.addGroup(preprocessing)
     
     
@@ -195,7 +195,7 @@ class Root(object):
     
     form.updateState(flags)
     
-    selected_metrics = filter(lambda metric: form.g('metrics').k(metric).value, all_metrics)
+    selected_features = filter(lambda feature: form.g('features').k(feature).value, all_features)
     opt_feature_scaling = form.g('preprocessing').k('ftrscale').value * TransformPipeline.TRANSFORM_SCALE
     opt_pca = form.g('preprocessing').k('pca').value * TransformPipeline.TRANSFORM_PCA
     opt_random_pca = form.g('preprocessing').k('randompca').value * TransformPipeline.TRANSFORM_RANDOM_PCA
@@ -209,7 +209,7 @@ class Root(object):
     c = Codeblock()
     c.disassembly_from_text(code)
     print c.get_mnemonic_histogram()
-    metr = MetricAggregator([all_metrics[m] for m in selected_metrics])
+    metr = FeatureAggregator([all_features[m] for m in selected_features])
     fdb = PgFunDB()
     knn = KNearestNeighbors(fdb, metr, 100, opt_feature_scaling)
     distances, ft_info = knn.get_neighbours(c)

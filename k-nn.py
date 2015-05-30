@@ -9,7 +9,7 @@ import sys
 import logging
 import argparse
 from mcmatch.db.types import Codeblock
-from mcmatch.commandline import MetricArg
+from mcmatch.commandline import FeatureArg
 from mcmatch.cluster import KNearestNeighbors
 from mcmatch.db.pg_database import PgFunDB
 
@@ -43,7 +43,7 @@ def main():
   parser = argparse.ArgumentParser(description='find k-nearest-neighbours')
   parser.add_argument('-F', '--file', dest='file', action='append', default = [],
       help='use the given assembly file[s]')
-  MetricArg.apply(parser)
+  FeatureArg.apply(parser)
   args = parser.parse_args()
   
   if len(args.file) == 0:
@@ -51,8 +51,8 @@ def main():
     return
   
   fdb = PgFunDB()
-  metr = MetricArg.get_aggregator(args)
-  scale_features = MetricArg.scale_features(args)
+  metr = FeatureArg.get_aggregator(args)
+  scale_features = FeatureArg.scale_features(args)
   knn = KNearestNeighbors(fdb, metr, 30, scale_features=scale_features)
   # TODO Cluster class should accept more than one Codeblock
   for f in args.file:

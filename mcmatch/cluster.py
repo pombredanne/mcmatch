@@ -3,7 +3,7 @@ Transformation analysis algorithms and support.
 
 @author: niko
 '''
-from mcmatch.db.types import Codeblock, FnMetric, Fn
+from mcmatch.db.types import Codeblock, FnFeature, Fn
 from mcmatch.util import extract_funname, NProgressPrinter,\
   signature_to_fname_heuristic
 import numpy as np
@@ -177,15 +177,15 @@ class TransformPipeline(object):
 class DistanceInfo(object):
   """Class to measure variations in the distance distribution of test instances to training sets
   under various transformations."""
-  def __init__(self, db, metric,
+  def __init__(self, db, feature,
                transform=0,
                training_repositories=None, norm="cityblock"):
     assert isinstance(db, FunDB)
-    assert isinstance(metric, FnMetric)
+    assert isinstance(feature, FnFeature)
     if training_repositories is not None:
       assert isinstance(training_repositories, list)
 
-    self.metric = metric
+    self.feature = feature
     if isinstance(transform, TransformPipeline):
       self.transformers = transform
     else:
@@ -198,7 +198,7 @@ class DistanceInfo(object):
   
   def _train(self, db):
     assert isinstance(db, FunDB)
-    self.trainingset_idx_to_ftid, train_data = db.get_metrics_np(self.metric, in_repositories=self.training_repositories, include_signature=True)
+    self.trainingset_idx_to_ftid, train_data = db.get_features_np(self.feature, in_repositories=self.training_repositories, include_signature=True)
     self.known_function_names = map(lambda z: signature_to_fname_heuristic(z[1]), self.trainingset_idx_to_ftid)
     train_data = self.transformers.transform_trainingset(train_data, self.known_function_names)
     self.train_data = train_data
@@ -223,18 +223,18 @@ class DistanceInfo(object):
     """returns a tuple:
     (pairwise distance as numpy matrix, testset_functiontext_info)"""
     assert isinstance(db, FunDB)
-    logging.info("Retrieving metrics for test set")
-    testset_idx_to_ftid, test_data = db.get_metrics_np(self.metric, in_repositories=in_repositories, include_signature=True)
+    logging.info("Retrieving features for test set")
+    testset_idx_to_ftid, test_data = db.get_features_np(self.feature, in_repositories=in_repositories, include_signature=True)
     if not len(testset_idx_to_ftid):
-      raise Exception("no metrics returned!")
+      raise Exception("no features returned!")
     logging.info("Calculating pairwise distances")
     self.test_data = test_data
     return (self._test(test_data), testset_idx_to_ftid)
 
   def test_codeblock(self, cb):
     assert isinstance(cb, Codeblock)
-    self.metric.calculate(cb)
-    test_data = np.array([self.metric.get_sql_contents()])
+    self.feature.calculate(cb)
+    test_data = np.array([self.feature.get_sql_contents()])
     if isinstance(cb, Fn):
       assert isinstance(cb, Fn) # for pydev.
       testset_info = (-1, cb.sig)
@@ -426,16 +426,16 @@ class DistanceInfo(object):
   
   
 class KNearestNeighbors(object):
-  def __init__(self, db, metric, k=30, transform=0, training_repositories=None, norm='euclidean'):
+  def __init__(self, db, feature, k=30, transform=0, training_repositories=None, norm='euclidean'):
     """Initialize the K-Nearest-Neighbours clusterers.
     This will immediately query the database and store the
     results within this instance, make sure to get rid of the
     object after use ASAP."""
     assert isinstance(db, FunDB)
-    assert isinstance(metric, FnMetric)
+    assert isinstance(feature, FnFeature)
     self.nn = None
     self.fids = []
-    self.features = metric
+    self.features = feature
     self.norm = norm
     
     if isinstance(transform, TransformPipeline):
@@ -448,7 +448,7 @@ class KNearestNeighbors(object):
 
   def _train(self, db, k):
     assert isinstance(db, PgFunDB)
-    self.fids, fdata = db.get_metrics_np(self.features, in_repositories=self.filter_in_repositories)
+    self.fids, fdata = db.get_features_np(self.features, in_repositories=self.filter_in_repositories)
     self.training_function_names = map(lambda z: signature_to_fname_heuristic(z[1]), self.fids)
     self.transformers.transform_trainingset(fdata, self.training_function_names)
     if self.norm == 'cosine':
@@ -473,9 +473,9 @@ class KNearestNeighbors(object):
     print self.features.get_sql_columns()
     print self.features.get_sql_contents()
 
-    codeblock_metric = np.array(self.features.get_sql_contents())
-    self.transformers.transform_testset(codeblock_metric)
-    distances, ft_info = self.nn.kneighbors(codeblock_metric)
+    codeblock_feature = np.array(self.features.get_sql_contents())
+    self.transformers.transform_testset(codeblock_feature)
+    distances, ft_info = self.nn.kneighbors(codeblock_feature)
     fn_text_ids = [self.fids[idx] for idx in ft_info[0]]
     return distances, fn_text_ids
 
@@ -491,8 +491,8 @@ class KNearestNeighbors(object):
       k functions (distance in distances, function id in distance_to_id) to the function(id) given
       in fids at index i.
     """
-    #codeblock_metrics = np.
-    test_info, test_data = db.get_metrics_np(self.features, in_repositories=in_repositories)
+    #codeblock_features = np.
+    test_info, test_data = db.get_features_np(self.features, in_repositories=in_repositories)
     test_data = self.transformers.transform_testset(test_data)
     distances, indizes = self.nn.kneighbors(test_data)
 

@@ -169,7 +169,7 @@ class Codeblock(object):
     """Encapsulates a set of disassembly lines."""
     disassembly = None
     disassembly_nlines = None
-    metrics = None
+    features = None
     compileopts = None
 
     def disassembly_from_text(self, text):
@@ -189,28 +189,28 @@ class Codeblock(object):
       return "\n".join(self.disassembly)
       
 
-    def calculate_metrics(self, force=True):
-      """Calculate all known metrics.
+    def calculate_features(self, force=True):
+      """Calculate all known features.
 
-      if force is set to True, metric will be updated even if
-      metrics already exist."""
+      if force is set to True, feature will be updated even if
+      features already exist."""
 
-      # TODO re-implement calculate_metrics/rename to import_metrics_from_database
-      raise Exception("calculate_metrics needs to be re-implemented")
+      # TODO re-implement calculate_features/rename to import_features_from_database
+      raise Exception("calculate_features needs to be re-implemented")
 
 
-    def metric_euclidean_diff_to(self, fnb, scaling=None):
+    def feature_euclidean_diff_to(self, fnb, scaling=None):
       """Create euclidean difference to a separate object."""
-      self.calculate_metrics()
-      fnb.calculate_metrics()
+      self.calculate_features()
+      fnb.calculate_features()
       a = 0
       ab = 0
-      for m in self.metrics['mc']:
-        d = self.metrics['mc'][m] - fnb.metrics['mc'][m]
+      for m in self.features['mc']:
+        d = self.features['mc'][m] - fnb.features['mc'][m]
         if scaling is not None and m in scaling:
           d *= scaling[m]
         a += pow(d, 2)
-        ab += self.metrics['mc'][m] + fnb.metrics['mc'][m]
+        ab += self.features['mc'][m] + fnb.features['mc'][m]
       a = pow(a, 0.5) # too lazy to go to the top of the file and import math
       return (a, ab)
 
@@ -480,19 +480,19 @@ class FnDiff(object):
     for vb in sorted(db, key=db.get, reverse=True)[:3]:
       print vb, db[vb], "%3.1f%%" % (100*float(db[vb])/self.fnblen)
 
-class FnMetric(object):
+class FnFeature(object):
   def __init__(self):
     pass
 
   def get_kv(self):
-    """Return a key/value pair describing this metric."""
+    """Return a key/value pair describing this feature."""
     raise NotImplementedError()
   
   def get_sql_table(self):
     raise NotImplementedError()
   
   def get_sql_columns(self, fq_select=True, fq_rename=False):
-    """Get the SQL columns for this metric.
+    """Get the SQL columns for this feature.
     If fq_select is True, the columns will be fully qualified (sqltable.column).
     If fq_rename is True, each column will include a "AS sqltable_column".
     """

@@ -19,8 +19,8 @@ from mcmatch.db.types import Fn, ObjectInfo, Codeblock
 from mcmatch.db.pg_database import PgFunDB
 from mcmatch.db.compileroptions import CompilerOptions
 from mcmatch.extraction import process_dir, process_file
-from mcmatch.metric.aggregator import MetricAggregator
-from mcmatch.metric.counter import counter_metrics
+from mcmatch.feature.aggregator import FeatureAggregator
+from mcmatch.feature.counter import counter_features
 from mcmatch import cluster
 import logging
 
@@ -50,13 +50,13 @@ class Test(unittest.TestCase):
       obj.get_compileopts().set_repository("dietlibc-0.33")
       self.fdb.set_compiler_options(obj)
 
-    logging.info("creating metrics")
+    logging.info("creating features")
 
-    metric_instances = [counter_metrics[m] for m in counter_metrics]
-    for m in metric_instances:
-      self.fdb.recreate_metrics_table(m)
+    feature_instances = [counter_features[m] for m in counter_features]
+    for m in feature_instances:
+      self.fdb.recreate_features_table(m)
 
-    function_texts = self.fdb.get_function_texts(with_missing_metrics=metric_instances)
+    function_texts = self.fdb.get_function_texts(with_missing_features=feature_instances)
 
     for row in function_texts:
       text_id, signature, text = row
@@ -64,10 +64,10 @@ class Test(unittest.TestCase):
       c = Codeblock()
       c.disassembly_from_text(text)
 
-      for m in counter_metrics:
-        mcounter = counter_metrics[m]
+      for m in counter_features:
+        mcounter = counter_features[m]
         mcounter.calculate(c)
-        self.fdb.store_metrics(text_id, mcounter)
+        self.fdb.store_features(text_id, mcounter)
     self.fdb.save()
 
   def tearDown(self):
@@ -81,8 +81,8 @@ class Test(unittest.TestCase):
     self.assertEqual(2468, len(list(self.fdb.get_functions_by_repository("glibc-2.20"))))
 
   def testAB(self):
-    all_metrics = MetricAggregator([counter_metrics[c] for c in counter_metrics])
-    di = cluster.DistanceInfo(self.fdb, all_metrics, training_repositories=['glibc-2.20'], )
+    all_features = FeatureAggregator([counter_features[c] for c in counter_features])
+    di = cluster.DistanceInfo(self.fdb, all_features, training_repositories=['glibc-2.20'], )
     pairwise_d, testset_infos = di.test(self.fdb, in_repositories=['dietlibc-0.33'])
     training_infos = di.get_trainingset_infos()
     em = cluster.DistanceInfo.make_equivalence_map(testset_infos, training_infos)

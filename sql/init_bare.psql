@@ -44,10 +44,10 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: metrics; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: features; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE TABLE metrics (
+CREATE TABLE features (
     function_text_id integer
 );
 
@@ -231,11 +231,11 @@ ALTER TABLE ONLY functions
 
 
 --
--- Name: metrics_function_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: features_function_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY metrics
-    ADD CONSTRAINT metrics_function_fkey FOREIGN KEY (function_text_id) REFERENCES function_text(id);
+ALTER TABLE ONLY features
+    ADD CONSTRAINT features_function_fkey FOREIGN KEY (function_text_id) REFERENCES function_text(id);
 
 
 --

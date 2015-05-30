@@ -30,7 +30,7 @@ def get_diff(db, fna, fnb, mode, scaling):
     
     return (diff.ratio_diff_szd, fna_si, fnb_si)
   if mode == MODE_METRIC_EUCLID:
-    m = fna.metric_euclidean_diff_to(fnb, scaling)
+    m = fna.feature_euclidean_diff_to(fnb, scaling)
     return (m[0], m[1], fna_si, fnb_si)
   if mode == MODE_HIST_EUCLID:
     m = fna.hist_euclidean_diff_to(fnb, scaling)
@@ -79,9 +79,9 @@ def main():
       action='store_true', dest='require_both')
   parser.add_argument('-m', '--min-length', help='ignore functions with less instructions than this', default=5, type=int,
       action='store', dest='min_length')
-  parser.add_argument('--mode', help='diff mode to use', choices=['diff-ratio', 'metric-default', 'metric-mncount'],
+  parser.add_argument('--mode', help='diff mode to use', choices=['diff-ratio', 'feature-default', 'feature-mncount'],
       action='store', dest='mode')
-  parser.add_argument('-s', '--scale', help='use scaling for metric-* modes', action='store_true', dest='scale')
+  parser.add_argument('-s', '--scale', help='use scaling for feature-* modes', action='store_true', dest='scale')
   args = parser.parse_args()
 
   if len(args.function_filter) == 0 or len(args.object_filter) == 0:
@@ -97,9 +97,9 @@ def main():
     fundb.precache_containing_objects(None)
   
   mode = MODE_FNDIFF
-  if args.mode == 'metric-default':
+  if args.mode == 'feature-default':
     mode = MODE_METRIC_EUCLID
-  elif args.mode == 'metric-mncount':
+  elif args.mode == 'feature-mncount':
     mode = MODE_HIST_EUCLID
   elif args.mode is not None:
     raise Exception("something went wrong, got %s as --mode" % args.mode)

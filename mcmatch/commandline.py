@@ -2,14 +2,14 @@
 commandline - command line utilities for argument parsing and output.
 """
 
-from mcmatch.metric.counter import counter_metrics
-from mcmatch.metric.aggregator import MetricAggregator
+from mcmatch.feature.counter import counter_features
+from mcmatch.feature.aggregator import FeatureAggregator
 
-class MetricArg(object):
+class FeatureArg(object):
   @staticmethod
   def apply(parser):
-      parser.add_argument('-m', '--metric', dest='metrics', action='append', default = [],
-          help='use the given metrics', choices=counter_metrics.keys() + ['all'], required=True)
+      parser.add_argument('-m', '--feature', dest='features', action='append', default = [],
+          help='use the given features', choices=counter_features.keys() + ['all'], required=True)
       parser.add_argument('-s', '--scale', dest='scale', action='store_true',
           help='use feature scaling')
 
@@ -20,12 +20,12 @@ class MetricArg(object):
   @staticmethod
   def get_aggregator(args):
     mtr_instances = []
-    if 'all' in args.metrics:
-      mtr_instances = [counter_metrics.values()]
+    if 'all' in args.features:
+      mtr_instances = [counter_features.values()]
     else:
-      for m in args.metrics:
-        mtr_instances.append(counter_metrics[m])
-    return MetricAggregator(mtr_instances)
+      for m in args.features:
+        mtr_instances.append(counter_features[m])
+    return FeatureAggregator(mtr_instances)
 
   @staticmethod
   def scale_features(args):

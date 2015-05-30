@@ -1,11 +1,11 @@
-from mcmatch.db.types import FnMetric, Fn, Codeblock
+from mcmatch.db.types import FnFeature, Fn, Codeblock
 '''
 Created on Dec 21, 2014
 
 @author: niko
 '''
 
-class MultiMnemonicCounterMetric(FnMetric):
+class MultiMnemonicCounterFeature(FnFeature):
   """Instruction Mnemonic Counter. Does not take operand types into account.
   A comparison of instructions by execution time/latency can be found
   in http://www.agner.org/optimize/instruction_tables.pdf
@@ -67,7 +67,7 @@ class MultiMnemonicCounterMetric(FnMetric):
     return [None]*len(mnemonics)
 
   def get_sql_table(self):
-    return "mnemonic_counter_metric"
+    return "mnemonic_counter_feature"
 
   def create_table_ddl(self):
     return "  " + ",\n  ".join(['mn_%s integer' % x for x in self._get_mnemonics()])
@@ -83,7 +83,7 @@ class MultiMnemonicCounterMetric(FnMetric):
     statement += t
     return statement, i
 
-class ArithCounter(MultiMnemonicCounterMetric):
+class ArithCounter(MultiMnemonicCounterFeature):
   def __init__(self):
     super(ArithCounter, self).__init__(
       ['add', 'sub', 'mul', 'div', 'imul', 'idiv', 'inc', 'dec', 'neg',
@@ -91,9 +91,9 @@ class ArithCounter(MultiMnemonicCounterMetric):
        'addl', 'subl'])
   
   def get_sql_table(self):
-    return 'arith_counter_metric'
+    return 'arith_counter_feature'
 
-class BitOpCounter(MultiMnemonicCounterMetric):
+class BitOpCounter(MultiMnemonicCounterFeature):
   def __init__(self):
     super(BitOpCounter, self).__init__(
       ['shr', 'shl', 'shld', 'shrd', 'ror', 'rol', 'rorl', 'roll',
@@ -101,11 +101,11 @@ class BitOpCounter(MultiMnemonicCounterMetric):
        'and', 'or', 'xor', 'not'])
     
   def get_sql_table(self):
-    return 'bitop_counter_metric'
+    return 'bitop_counter_feature'
 
-class JmpCounter(MultiMnemonicCounterMetric):
+class JmpCounter(MultiMnemonicCounterFeature):
   def __init__(self):
-    #TODO fix metrics
+    #TODO fix features
     super(JmpCounter, self).__init__(
        ['jmp',
         'je', 'jne',
@@ -120,17 +120,17 @@ class JmpCounter(MultiMnemonicCounterMetric):
         ])
 
   def get_sql_table(self):
-    return "jmp_counter_metric"
+    return "jmp_counter_feature"
 
-class CallCounter(MultiMnemonicCounterMetric):
+class CallCounter(MultiMnemonicCounterFeature):
   def __init__(self):
     super(CallCounter, self).__init__(['call'])
   
   def get_sql_table(self):
-    return "call_counter_metric"
+    return "call_counter_feature"
 
-counter_metrics = {
-  'expensive': MultiMnemonicCounterMetric,
+counter_features = {
+  'expensive': MultiMnemonicCounterFeature,
   'arithmetic': ArithCounter,
   'logical': BitOpCounter,
   'jumps': JmpCounter,

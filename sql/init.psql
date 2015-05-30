@@ -62,21 +62,21 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: metrics; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
+-- Name: features; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
 --
 
-CREATE TABLE metrics (
+CREATE TABLE features (
     function_text_id integer
 );
 
 
-ALTER TABLE metrics OWNER TO niko;
+ALTER TABLE features OWNER TO niko;
 
 --
--- Name: arith_counter_metric; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
+-- Name: arith_counter_feature; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
 --
 
-CREATE TABLE arith_counter_metric (
+CREATE TABLE arith_counter_feature (
     mn_add integer,
     mn_sub integer,
     mn_mul integer,
@@ -91,16 +91,16 @@ CREATE TABLE arith_counter_metric (
     mn_addl integer,
     mn_subl integer
 )
-INHERITS (metrics);
+INHERITS (features);
 
 
-ALTER TABLE arith_counter_metric OWNER TO niko;
+ALTER TABLE arith_counter_feature OWNER TO niko;
 
 --
--- Name: bitop_counter_metric; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
+-- Name: bitop_counter_feature; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
 --
 
-CREATE TABLE bitop_counter_metric (
+CREATE TABLE bitop_counter_feature (
     mn_shr integer,
     mn_shl integer,
     mn_shld integer,
@@ -116,22 +116,22 @@ CREATE TABLE bitop_counter_metric (
     mn_xor integer,
     mn_not integer
 )
-INHERITS (metrics);
+INHERITS (features);
 
 
-ALTER TABLE bitop_counter_metric OWNER TO niko;
+ALTER TABLE bitop_counter_feature OWNER TO niko;
 
 --
--- Name: call_counter_metric; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
+-- Name: call_counter_feature; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
 --
 
-CREATE TABLE call_counter_metric (
+CREATE TABLE call_counter_feature (
     mn_call integer
 )
-INHERITS (metrics);
+INHERITS (features);
 
 
-ALTER TABLE call_counter_metric OWNER TO niko;
+ALTER TABLE call_counter_feature OWNER TO niko;
 
 --
 -- Name: function_text; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
@@ -214,10 +214,10 @@ ALTER SEQUENCE functions_id_seq OWNED BY functions.id;
 
 
 --
--- Name: jmp_counter_metric; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
+-- Name: jmp_counter_feature; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
 --
 
-CREATE TABLE jmp_counter_metric (
+CREATE TABLE jmp_counter_feature (
     mn_jmp integer,
     mn_je integer,
     mn_jne integer,
@@ -241,16 +241,16 @@ CREATE TABLE jmp_counter_metric (
     mn_loopnz integer,
     mn_loopz integer
 )
-INHERITS (metrics);
+INHERITS (features);
 
 
-ALTER TABLE jmp_counter_metric OWNER TO niko;
+ALTER TABLE jmp_counter_feature OWNER TO niko;
 
 --
--- Name: mnemonic_counter_metric; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
+-- Name: mnemonic_counter_feature; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
 --
 
-CREATE TABLE mnemonic_counter_metric (
+CREATE TABLE mnemonic_counter_feature (
     mn_fsqrt integer,
     mn_fsin integer,
     mn_fcos integer,
@@ -268,10 +268,10 @@ CREATE TABLE mnemonic_counter_metric (
     mn_sqrtss integer,
     mn_sqrtps integer
 )
-INHERITS (metrics);
+INHERITS (features);
 
 
-ALTER TABLE mnemonic_counter_metric OWNER TO niko;
+ALTER TABLE mnemonic_counter_feature OWNER TO niko;
 
 --
 -- Name: objects; Type: TABLE; Schema: public; Owner: niko; Tablespace: 
@@ -384,11 +384,11 @@ ALTER TABLE ONLY functions
 
 
 --
--- Name: metrics_function_fkey; Type: FK CONSTRAINT; Schema: public; Owner: niko
+-- Name: features_function_fkey; Type: FK CONSTRAINT; Schema: public; Owner: niko
 --
 
-ALTER TABLE ONLY metrics
-    ADD CONSTRAINT metrics_function_fkey FOREIGN KEY (function_text_id) REFERENCES function_text(id);
+ALTER TABLE ONLY features
+    ADD CONSTRAINT features_function_fkey FOREIGN KEY (function_text_id) REFERENCES function_text(id);
 
 
 --

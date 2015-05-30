@@ -2,7 +2,7 @@
 from mcmatch.db.types import ObjectInfo, FnDiff
 from mcmatch.db.pg_database import PgFunDB as DB
 from mcmatch.cluster import KNearestNeighbors, DistanceInfo
-from mcmatch.commandline import MetricArg
+from mcmatch.commandline import FeatureArg
 from mcmatch.util import extract_funname, NProgressPrinter
 import logging
 import re
@@ -53,7 +53,7 @@ def main():
   parser.add_argument('-f', '--list-functions', dest='list_functions_in',
       help='list functions in given repository',
       default=None)
-  MetricArg.apply(parser)
+  FeatureArg.apply(parser)
   args = parser.parse_args()
 
 
@@ -92,8 +92,8 @@ def main():
     logging.error("repository %s has no functions" % (args.test_set))
     return
 
-  aggr = MetricArg.get_aggregator(args)
-  scale_features = MetricArg.scale_features(args)
+  aggr = FeatureArg.get_aggregator(args)
+  scale_features = FeatureArg.scale_features(args)
 
   do_knn(fdb, aggr, scale_features, args.training_sets, args.test_set)
   do_dist(fdb, aggr, scale_features, args.training_sets, args.test_set)
