@@ -1,5 +1,5 @@
 '''
-Created on Jan 6, 2015
+Transformation analysis algorithms and support.
 
 @author: niko
 '''
@@ -27,6 +27,7 @@ class LabelTransformer(object):
   integer (actually, double) labels, and back"""
 
   def __init__(self, labels):
+    """Initialize the transformers with an array of string labels"""
     i = 0
     lbl_map = {}
     lst = []
@@ -43,12 +44,16 @@ class LabelTransformer(object):
     self.i = i
 
   def int_labels(self):
+    """Get the integer representation of the string labels, in the order
+    in which they were passed to __init__"""
     return np.array(self.lst, dtype='d')
 
   def string_label(self, int_label):
+    """get the string respresentations of a single label in integer format"""
     return lbl_map_r[int(int_label)]
 
   def string_labels(self, numpy_labels):
+    """return an array of the string representations of an numpy.array or list of labels."""
     ret = []
     for lbl in numpy_labels:
       ret.append(self.string_label(lbl))
@@ -56,6 +61,12 @@ class LabelTransformer(object):
 
 
 def filter_trainingset(trainset, labels, k):
+    """Filter a trainingset to contain only those instances, whos class (as determined by
+    associated labels) appears at least k times.
+    
+    Returns the filtered trainingset as well as the indices used for filtering (which can then
+    be applied to the label data).
+    """
     lblctr = defaultdict(int)
     for lbl in labels:
         lblctr[lbl] += 1
@@ -63,9 +74,14 @@ def filter_trainingset(trainset, labels, k):
     return trainset[indices], indices
 
 def filter_classes(trainset, trainset_labels, testset_labels):
+  """Filter a set of training set instances and their associated labels
+  to only contain the classes contained in testset_labels.
+
+  Returns a tuple of the filtered training set and the filtered label list."""
   indices = np.array(map(lambda l: l in testset_labels, trainset_labels), dtype=bool)
   trainset_classes = np.array(trainset_labels)[indices]
   return trainset[indices], trainset_classes
+
 
 class TransformPipeline(object):
   """A transformation pipeline, similar to scikit-learn's sklearn.pipeline.Pipeline."""
@@ -77,6 +93,8 @@ class TransformPipeline(object):
   TRANSFORM_NCA = 32
   
   def __init__(self, init_with = 0):
+    """Initialize the transformation pipleine, with an optional list of transformation
+    modes. init_with can be any bitwise-or'd combination of the TRANSFORM_* modes."""
     self.pipeline = []
     self.supervised_pipeline = []
     self.mink = 4
@@ -95,6 +113,7 @@ class TransformPipeline(object):
       self.supervised_pipeline.append(NCA())
    
   def add(self, stage):
+    """Add any sklearn.base.TransformerMixin instance to the (unsupervised) pipeline."""
     assert isinstance(stage, sklearn.base.TransformerMixin)
     self.pipeline.add()
     
@@ -111,6 +130,14 @@ class TransformPipeline(object):
     self.pipeline.append(KernelPCA())
   
   def transform_trainingset(self, ts, labels=None):
+    """Transform the trainingset by fitting and applying each
+    transformer in the pipeline.
+
+    If a supervised method (TRANSFORM_LMNN or TRANSFORM_NCA) is used,
+    the labels parameter needs to be set to a list of class labels.
+    
+    Returns the updated training set.
+    """
     for p in self.pipeline:
       ts = p.fit_transform(ts)
     
@@ -136,6 +163,8 @@ class TransformPipeline(object):
     return ts
   
   def transform_testset(self, ts):
+    """Apply the transformations in the pipeline to the
+    passed testset and return the transformed result."""
     for p in self.pipeline:
       ts = p.transform(ts)
     
@@ -146,6 +175,8 @@ class TransformPipeline(object):
   
 
 class DistanceInfo(object):
+  """Class to measure variations in the distance distribution of test instances to training sets
+  under various transformations."""
   def __init__(self, db, metric,
                transform=0,
                training_repositories=None, norm="cityblock"):

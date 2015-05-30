@@ -52,7 +52,7 @@ class Test(unittest.TestCase):
 
     logging.info("creating metrics")
 
-    metric_instances = [counter_metrics[m]() for m in counter_metrics]
+    metric_instances = [counter_metrics[m] for m in counter_metrics]
     for m in metric_instances:
       self.fdb.recreate_metrics_table(m)
 
@@ -65,7 +65,7 @@ class Test(unittest.TestCase):
       c.disassembly_from_text(text)
 
       for m in counter_metrics:
-        mcounter = counter_metrics[m]()
+        mcounter = counter_metrics[m]
         mcounter.calculate(c)
         self.fdb.store_metrics(text_id, mcounter)
     self.fdb.save()

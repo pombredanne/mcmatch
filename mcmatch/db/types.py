@@ -1,5 +1,5 @@
 '''
-Created on Dec 16, 2014
+Core ORM types
 
 @author: niko
 '''
@@ -14,11 +14,25 @@ from mcmatch.x86 import jump_mnemonics
 import re
 
 class ObjectInfo:
+  """Represents the information of an object file."""
+
   id = None
   locked = False
   
   def __init__(self, object_path, mtime=None, function_list=None,
                normalize_path=True, id=None):
+    """Create an instance.
+
+    @type object_path: str
+    @param object_path: specifies the path to the object file.
+    @param mtime: if not None, the modification time will be set from the object file on disk
+    @type normalize_path: list
+    @param function_list: if not None, it must be a list of L{Fn} instances, describing the list of functions contained
+                          in this object.
+    @type normalize_path: bool
+    @param normalize_path: perform object_path normalization using L{os.path.abspath}.
+
+    """
     if normalize_path:
       self.object_path = os.path.abspath(object_path)
     else:
@@ -42,13 +56,19 @@ class ObjectInfo:
     return self.mtime
   
   def get_functions_by_shortname(self):
+    """
+    Returns a list of all functions as L{Fn} instances.
+
+    TODO: add filtering capabilities"""
     return self.function_list
 
   def add_function(self, function):
+    """Add an L{Fn} instance to the function list."""
     assert isinstance(function, Fn)
     self.function_list.append(function)
 
   def set_compileopts(self, compileopts):
+    """Associate L{CompilerOptions} with this object file."""
     assert isinstance(compileopts, CompilerOptions)
     self.compileopts = compileopts
 
@@ -68,6 +88,7 @@ class ObjectInfo:
     return self.object_path
 
 class DisassemblyLine:
+  """Class representing a single assembly instruction."""
   pos_abs = 0
   pos_rel = 0
   op = ''
@@ -84,11 +105,18 @@ class DisassemblyLine:
     return self.op in jump_mnemonics
   
   def get_jump_offset(self, abort_on_error=False):
+    """Attempts detection of the jump offset.
+
+    This is done by first attempting to identify an absolute jump address,
+    or, if that fails, a relative jump address.
+    
+    @return: The relative jump distance, in bytes (negative for backward jumps).
+    """
     if not (self.is_conditional_jump() or self.is_unconditional_jump()):
       if abort_on_error:
         raise RuntimeError("Not a jump")
       else:
-        return None
+        return 0
     
     if len(self.params) == 1:
       jumptgt_abs = re.compile("^0x([0-9a-fA-F]+)$")
@@ -105,11 +133,12 @@ class DisassemblyLine:
         logging.error("Cannot reliably identify jump target: %r %r --> %r " %(
                                                 self.op, self.params, self.comment))
         return 0
-      return -self.pos_rel
     
     return int(jumptgt.group(1))  - self.pos_rel
     
   def from_line(self, line):
+    """Create an instance from a standard gdb disassembly line,
+    in the format 0x(absolute address) <(+relative address)> mnemonic [parameters] [comments]"""
     if not len(line):
       return
     tokens = line.split()
@@ -137,12 +166,16 @@ class DisassemblyLine:
     
     
 class Codeblock(object):
+    """Encapsulates a set of disassembly lines."""
     disassembly = None
     disassembly_nlines = None
     metrics = None
     compileopts = None
 
     def disassembly_from_text(self, text):
+      """Set instances content from a block of text in gdb-format,
+      with newlines separated by "\n".
+      """
       if text is None:
         self.disassembly = []
       else:
@@ -150,6 +183,7 @@ class Codeblock(object):
         self.disassembly_nlines = len(self.disassembly)
 
     def disassembly_to_text(self):
+      """Get instances content as a block of text in gdb-format."""
       if self.disassembly is None:
         return ""
       return "\n".join(self.disassembly)
@@ -166,6 +200,7 @@ class Codeblock(object):
 
 
     def metric_euclidean_diff_to(self, fnb, scaling=None):
+      """Create euclidean difference to a separate object."""
       self.calculate_metrics()
       fnb.calculate_metrics()
       a = 0
@@ -228,6 +263,10 @@ class Codeblock(object):
                 0) #sm.find_longest_match(0, len(a), 0, len(b))[2])
 
     def prep_disassembly(self, lines, flags):
+        """Return a list representation of tokenized instructions from a list of
+        instructions given in 'lines'.
+        Each list entry contains the tokens included through bitwise-or'ing the
+        flags parameter with the DIFF_*-constants."""
         new_lines = []
         for line in lines:
           elems = line.split()
@@ -247,17 +286,23 @@ class Codeblock(object):
         return new_lines
 
     def get_mnemonic_list(self):
+      """return a list of the mnemonic parts of all instructions of this object."""
       if not self.disassembly:
         raise Exception("Instance does not contain disassembly.")
       return self.prep_disassembly(self.disassembly, self.DIFF_MNEMONIC)
 
     def get_mnemonic_histogram(self):
+      """return a dictionary of the number of occurences of all mnemonics in this instance."""
       l = self.get_mnemonic_list()
       d = collections.defaultdict(int)
       for x in l: d[x] += 1
       return d
 
 class Fn(Codeblock):
+    """Represents a function instance.
+
+    This class extends Codeblock with information related to a function in an object,
+    such as the function signature and the containing object."""
     sig = None
     source_file = None
     function_id = None
@@ -265,6 +310,10 @@ class Fn(Codeblock):
 
     @staticmethod
     def get_sql_select(disassembly=True):
+      """Return the SQL SELECT columns required for the L{from_sql_row} function.
+      
+      @param disassembly: Include disassembled code
+      """
       ret = """SELECT
         functions.id, functions.name, functions.signature,
         functions.source_file, functions.objectID, functions.function_text_lines"""
@@ -281,6 +330,11 @@ class Fn(Codeblock):
     
     @classmethod
     def from_sql_row(cls, row, disassembly):
+      """Create a new Fn instance from a list or tuple containing
+      the columns, as retrieved the columns defined by L{get_sql_select}.
+
+      @param disassembly: Include disassembly. If set to True, get_sql_select must be called
+                          with disassembly=True as well."""
       fn_id = row[0]
       name = row[1]
       sig = row[2]
@@ -297,6 +351,13 @@ class Fn(Codeblock):
       return fn
 
     def __init__(self, name, full_sig, source_file, object_id=None):
+      """Create a new instance.
+
+      @param name: The function name
+      @param full_sig: The full signature
+      @param source_file: Path to the source file
+      @param object_id: The id of the containing object, if known"""
+
       if object_id is not None:
         assert isinstance(object_id, int)
       self.name = name
@@ -312,11 +373,19 @@ class Fn(Codeblock):
       return self.object_id
 
     def length(self):
+      """Return the length of the text form of the disassembled code,
+      in bytes."""
       if not self.disassembly:
         return 0
       return len(self.disassembly)
 
     def get_shortinfo(self, compileroptions=None, db=None):
+      """returns a short string representing the function.
+      
+      @param compileroptions: A L{CompilerOptions} instance, to be included in the shortinfo text.
+      @param db: A L{FunDB} instance that is queried when L{CompilerOptions} is None. If
+                 neither compileroptions nor db is set, "???" will be displayed instead of compiler/optimization level.
+      """
       if compileroptions is None and db is not None:
         compileroptions = db.get_compiler_options(self.object_id)
       ret = self.name
@@ -337,14 +406,21 @@ class Fn(Codeblock):
       return ret
 
     def get_shortinfo_html(self, compileroptions=None, db=None):
+      """As get_shortinfo, but as a HTML representation to be used with the built-in webserver"""
       return "<a href='/fn?id=%d'>%s</a>" % (self.function_id, self.get_shortinfo(compileroptions, db))
 
     def set_compileopts(self, opts):
+      """Update the compileroptions for this instance."""
       if not isinstance(opts, CompilerOptions):
         raise "set_compileopts requires a CompilerOptions parameter"
       self.compileopts = opts
 
     def match_shortinfo(self, opts):
+      """Return True if this function matches the compiler options according to
+      L{CompilerOptions.match_shortinfo}. Returns also True if the argument is empty,
+      Returns False if this instance has no compiler options attached.
+
+      @param opts: The options to match."""
       # TODO make this include function name
       opts = opts.strip()
       if len(opts) == 0:
@@ -355,9 +431,8 @@ class Fn(Codeblock):
       return self.compileopts.match_shortinfo(opts)
 
 
-
-
 class FnDiff(object):
+  """A utility class for 1:1 comparison of two functions."""
   ratio_diff = None
   ratio_diff_szd = None
   longest_block_sz = None
@@ -365,6 +440,9 @@ class FnDiff(object):
   fnblen = None
 
   def __init__(self, fna, fnb):
+    """Initialize with two L{Fn} instances."""
+    assert isinstance(fna, Fn)
+    assert isinstance(fnb, Fn)
     self.fna = fna
     self.fnb = fnb
 
