@@ -5,6 +5,7 @@ HTML form abstraction
 '''
 
 class CheckBox(object):
+  """Checkbox abstraction."""
   def __init__(self, key, label=None, default=False):
     self.key = key
     if label is None:
@@ -20,6 +21,7 @@ class CheckBox(object):
       self.value = False
   
   def getHTML(self, prefix):
+    """Return the HTML representation"""
     key = prefix + "_" + self.key
     ret = "<input type='checkbox' name='%s' id='%s'" % (key, key)
     if self.value:

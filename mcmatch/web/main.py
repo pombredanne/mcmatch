@@ -36,13 +36,16 @@ def mimetype(type):
 
 
 class Root(object):
+  """CherryPy root application"""
 
   def _require_code(self):
+    """returns the session loaded code, or throws a redirect error to the code load page."""
     if not 'code' in cherrypy.session:  # @UndefinedVariable
       raise HTTPRedirect('/update_code')
     return cherrypy.session['code']  # @UndefinedVariable
 
   def _optional_code(self):
+    """Returns the loaded code or None."""
     if not 'code' in cherrypy.session: # @UndefinedVariable
       return None
     return cherrypy.session['code'] # @UndefinedVariable
