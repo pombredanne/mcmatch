@@ -2,7 +2,7 @@
 from IPython import embed
 
 from mcmatch.db.pg_database import PgFunDB
-from mcmatch import cluster
+from mcmatch import analyze
 from mcmatch.metric.counter import counter_metrics
 from mcmatch.metric.aggregator import MetricAggregator
 all_metrics = MetricAggregator([counter_metrics[c]() for c in counter_metrics])

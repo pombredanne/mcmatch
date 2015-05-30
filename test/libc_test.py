@@ -9,7 +9,7 @@ MCMATCH_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 
 sys.path.append(MCMATCH_BASE)
 
-# there is a weird bug *SOMEWHERE* when importing mcmatch.cluster.
+# there is a weird bug *SOMEWHERE* when importing mcmatch.analyze.
 # Importing NeaerestNeighbors and KDTree first seems to fix that.
 from sklearn.neighbors import NearestNeighbors, KDTree
 import unittest
@@ -21,7 +21,7 @@ from mcmatch.db.compileroptions import CompilerOptions
 from mcmatch.extraction import process_dir, process_file
 from mcmatch.feature.aggregator import FeatureAggregator
 from mcmatch.feature.counter import counter_features
-from mcmatch import cluster
+from mcmatch import analyze
 import logging
 
 class Test(unittest.TestCase):
@@ -82,13 +82,13 @@ class Test(unittest.TestCase):
 
   def testAB(self):
     all_features = FeatureAggregator([counter_features[c] for c in counter_features])
-    di = cluster.DistanceInfo(self.fdb, all_features, training_repositories=['glibc-2.20'], )
+    di = analyze.DistanceInfo(self.fdb, all_features, training_repositories=['glibc-2.20'], )
     pairwise_d, testset_infos = di.test(self.fdb, in_repositories=['dietlibc-0.33'])
     training_infos = di.get_trainingset_infos()
-    em = cluster.DistanceInfo.make_equivalence_map(testset_infos, training_infos)
+    em = analyze.DistanceInfo.make_equivalence_map(testset_infos, training_infos)
     good, bad, other = 0, 0, 0
     for i in range(0, len(em)):
-        res = cluster.DistanceInfo.get_partition_sizes(pairwise_d[i], None, em[i])
+        res = analyze.DistanceInfo.get_partition_sizes(pairwise_d[i], None, em[i])
         for el in res:
             if el[0] < el[2]:
                 good += 1

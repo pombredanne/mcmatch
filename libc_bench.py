@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 from mcmatch.db.types import ObjectInfo, FnDiff
 from mcmatch.db.pg_database import PgFunDB as DB
-from mcmatch.cluster import KNearestNeighbors, DistanceInfo
+from mcmatch.analyze import KNearestNeighbors, DistanceInfo
 from mcmatch.commandline import FeatureArg
 from mcmatch.util import extract_funname, NProgressPrinter
 import logging

@@ -10,7 +10,7 @@ import logging
 import argparse
 from mcmatch.db.types import Codeblock
 from mcmatch.commandline import FeatureArg
-from mcmatch.cluster import KNearestNeighbors
+from mcmatch.analyze import KNearestNeighbors
 from mcmatch.db.pg_database import PgFunDB
 
 def knn_file(fname, fdb, knn):

@@ -12,7 +12,7 @@ from mcmatch.db.types import Codeblock, ObjectInfo
 from mcmatch.feature.counter import counter_features
 from mcmatch.feature import all_features, grouped_features
 from mcmatch.feature.aggregator import FeatureAggregator
-from mcmatch.cluster import KNearestNeighbors, DistanceInfo, TransformPipeline
+from mcmatch.analyze import KNearestNeighbors, DistanceInfo, TransformPipeline
 from mcmatch.db.database import FunDB
 from mcmatch.db.pg_database import PgFunDB
 from mcmatch.web.form import CheckBox, Group, Form
