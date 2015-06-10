@@ -161,12 +161,25 @@ class PgFunDB(FunDB):
     return Fn.from_sql_row(row, include_disassembly)
 
 
+  def get_functions_matching_signature(self, signature, limit=300, include_disassembly=False):
+    cursor = self.conn.cursor()
+    limits = ""
+    if limit is not None:
+      limits = " LIMIT %d" % limit
+
+    cursor.execute(Fn.get_sql_select(include_disassembly) + " WHERE signature ILIKE '%%'||%s||'%%'" + limits, (signature,))
+
+    for i in self._yield_fnquery_rows(cursor, include_disassembly):
+      yield i
+
+
   def get_functions_with_textid(self, textid, include_disassembly=False):
     cursor = self.conn.cursor()
     cursor.execute(Fn.get_sql_select(include_disassembly) + " WHERE function_text_id = %s", (textid,))
     
     for i in self._yield_fnquery_rows(cursor, include_disassembly):
       yield i
+
 
   def get_functions_by_objectid(self, objectid, include_disassembly=False):
     cursor = self.conn.cursor()

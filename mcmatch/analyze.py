@@ -102,9 +102,11 @@ class TransformPipeline(object):
     if init_with & self.TRANSFORM_SCALE:
       self.add_standard_scaler()
     if init_with & self.TRANSFORM_PCA:
-      self.add_pca()
+       print "Adding PCA"
+       self.add_pca()
     if init_with & self.TRANSFORM_RANDOM_PCA:
-      self.add_random_pca()   
+       print "Adding RandomPCA"
+       self.add_random_pca()
     if init_with & self.TRANSFORM_KERNEL_PCA:
       self.add_kernel_pca()
     if init_with & self.TRANSFORM_LMNN:
@@ -366,10 +368,16 @@ class DistanceInfo(object):
       self.make_graph_single(pairwise_d[row_idx], testset_tuple, equivalence_map[row_idx])
       if row_idx > 200:
         break
-  
-
+ 
   @staticmethod
-  def lowest_matching(pairwise_d, testset_infos, equivalence_map, do=lambda test_idx, train_idx, dist: dist):
+  def lowest_matching(pairwise_d, testset_infos, equivalence_map, do=None):
+    """Returns a list of the functions from the equivalence_map with the lowest distance.
+
+    @param do: A function taking the parameters test_idx, train_idx, dist. Its return value
+               will be the returned in the list. Defaults to a function returning the distance.
+    """
+    if do is None:
+      do = lambda test_idx, train_idx, dist: dist
     results = []
     for row_idx, row_info in enumerate(testset_infos):
       lowest_matching_idx = None
@@ -401,7 +409,12 @@ class DistanceInfo(object):
     return good, bad, other
   
   @staticmethod
-  def make_aggregate_hists(pairwise_d, testset_infos, equivalence_map, bins=30, range=(0,30)):
+  def _make_aggregate_hists(pairwise_d, testset_infos, equivalence_map, bins=30, range=None):
+    if range is None:
+      # The range is set from 0 to the 75% quantile + 10%.
+      range_end = np.percentile(pairwise_d, q=75)
+      range_end += range_end*0.2
+      range = (0, range_end)
     hist, bins = np.histogram(pairwise_d, bins=bins, range=range)
     closest_dists = DistanceInfo.lowest_matching(pairwise_d, testset_infos, equivalence_map)
     closest_dists = filter(lambda z: z is not None, closest_dists)
@@ -411,7 +424,16 @@ class DistanceInfo(object):
   @staticmethod
   def make_aggregate_graph(pairwise_d, testset_infos, equivalence_map, title=None,
                            train_name="training", test_name="test"):
-    bins, hist, cdhist = DistanceInfo.make_aggregate_hists(pairwise_d, testset_infos, equivalence_map)
+    """Creates a graph of two histograms, the histogram over all distances and the histogram
+    of distances to instances refered to in the equivalence_map.
+
+    @param pairwise_d: a pairwise distance matric
+    @param title: Optional title for the graph
+    @param testset_infos: the list of function ids in the testset
+    @return: A pyplot figure handle
+    """
+    
+    bins, hist, cdhist = DistanceInfo._make_aggregate_hists(pairwise_d, testset_infos, equivalence_map)
     fig, ax1 = plt.subplots()
     allf, = ax1.plot(bins[1:], hist, label="all (%s)" % train_name)
     ax1.set_xlabel("distance (from %s)" % test_name)

@@ -6,15 +6,15 @@
 <a href="/">Start</a>
 <h1>mxmatch - {{ title }}</h1>
 
-<form action="/repos" method="GET">
-<input type="text" name="search" />
+<form action="/fn_search" method="GET">
+  <input type="text" name="search" value="{{ search }}" autofocus="autofocus" />
 <input type="submit" name="submit" value="search" />
 </form>
 
-<h2>Known Repositories</h2>
+<h2>Results</h2>
 <monospace>
-{% for rep in repos %}
-<a href='/repo/{{ rep }}'>{{ rep }}</a><br />
+{% for fun in functions %}
+<a href='/fn?id={{ fun.function_id }}'>{{ fun.sig }}</a><br />
 {% endfor %}
 <br />
 </body>

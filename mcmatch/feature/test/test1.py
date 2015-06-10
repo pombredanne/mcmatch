@@ -4,7 +4,7 @@ Created on Jan 20, 2015
 @author: niko
 '''
 import unittest
-from mcmatch.feature.counter import CallCounter, MultiMnemonicCounterMetric
+from mcmatch.feature.counter import CallCounter, MultiMnemonicCounterFeature
 
 
 class CallCounterTest(unittest.TestCase):
@@ -54,7 +54,7 @@ class CallCounterTest(unittest.TestCase):
           self.assertTrue(c.endswith("_rel"))
         
     def testMultiMnemonicCounter(self):
-      cc = MultiMnemonicCounterMetric()
+      cc = MultiMnemonicCounterFeature()
       self._generic_precheck(cc, False)
       
       cc.calculate_from_histogram({'add': 5, 'div': 10})
@@ -68,7 +68,7 @@ class CallCounterTest(unittest.TestCase):
       self.assertEqual(sum(cc.get_sql_contents()), 10)
       
     def testMultiMnemonicCounterRelative(self):
-      cc = MultiMnemonicCounterMetric(relative=True)
+      cc = MultiMnemonicCounterFeature(relative=True)
       self._generic_precheck(cc, True)
       
       cc.calculate_from_histogram({'add': 5, 'div': 10})

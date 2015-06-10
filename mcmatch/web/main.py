@@ -90,6 +90,18 @@ class Root(object):
     return metr.get_kv()
   
   @cherrypy.expose
+  def fn_search(self, search=None, submit=None):
+    functions = []
+    fdb = PgFunDB()
+    if search is not None:
+      functions = list(fdb.get_functions_matching_signature(search, limit=300))
+
+    template = env.get_template("find-fn.html")
+    return template.render(title="Function search",
+                           functions=functions,
+                           search=search if search is not None else "")
+
+  @cherrypy.expose
   def fn(self, id):
     fdb = PgFunDB()
     id = int(id)
@@ -116,6 +128,7 @@ class Root(object):
 
   @cherrypy.expose
   def repo(self, reponame):
+    # TODO add support for reponame=None
     fdb = PgFunDB()
     object_ids  = fdb.get_objectids_matching(repository_is=reponame)
     objects = fdb.get_objects(object_ids)
@@ -141,7 +154,7 @@ class Root(object):
     ftid_prefix = "ftid_"
     ftids = []
     for f in flags:
-      print f, flags[f]
+      #print f, flags[f]
       if f.startswith(ftid_prefix) and flags[f]:
         try:
           val = int(f[len(ftid_prefix):])
@@ -214,7 +227,11 @@ class Root(object):
     print c.get_mnemonic_histogram()
     metr = FeatureAggregator([all_features[m] for m in selected_features])
     fdb = PgFunDB()
-    knn = KNearestNeighbors(fdb, metr, 100, opt_feature_scaling)
+    repos = list(fdb.get_repository_names())
+    # TODO add select mode
+    #repos = [r if r is not "None" else None for r in repos]
+    repos = filter(lambda n: n != "musl-1.1.6" and n != 't-glibc', repos)
+    knn = KNearestNeighbors(fdb, metr, 100, opt_feature_scaling, training_repositories=repos)
     distances, ft_info = knn.get_neighbours(c)
 
     function_text_ids = [f[0] for f in ft_info]
@@ -232,12 +249,15 @@ class Root(object):
       nn = DistanceInfo(fdb, metr, opt_feature_scaling, None, "euclidean")
       dists, tb_info = nn.test_codeblock(c)
       function_text_ids_ = [f[0] for f in nn.get_trainingset_infos()]
-      equivalences = self._get_index_from_ftid(self._get_selected_ftids(flags),
+      additional_ftdids = []
+      if 'add_ftdids' in flags:
+        additional_ftdids = [int(z) for z in flags['add_ftdids'].split(",")]
+      equivalences = self._get_index_from_ftid(self._get_selected_ftids(flags) + additional_ftdids,
                                                function_text_ids_)
       function_names = [nn.get_trainingset_infos()[idx][1] for idx in equivalences]
       tb_info = (-1, "md5_process_block")
       nn.make_graph_single(dists[0], tb_info, equivalences,
-                           valueRange=(valueRange[0]*0.8, valueRange[1]*1.2),
+                           valueRange=(valueRange[0]*0.9, valueRange[1]*1.8),
                            equiNames=function_names)
       plotsrc = self._pyplot_to_inline_image()
         
@@ -254,6 +274,8 @@ class Root(object):
     imgdata.seek(0)
     imgdata = imgdata.read()
     imgdata = base64.b64encode(imgdata)
+
+    plt.savefig("_last-graph.pdf")
     plt.close()
     return "data:image/png;base64," + imgdata
       

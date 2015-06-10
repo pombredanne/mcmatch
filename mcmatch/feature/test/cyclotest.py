@@ -4,7 +4,7 @@ Created on Apr 1, 2015
 @author: niko
 '''
 import unittest
-from mcmatch.feature.cyclo import PseudoCyclofeatureComplexityMetric
+from mcmatch.feature.cyclo import PseudoCyclofeatureComplexityFeature
 from mcmatch.db.types import Codeblock
 
 # exp10 of musl
@@ -53,7 +53,7 @@ class Test(unittest.TestCase):
 
 
     def setUp(self):
-        self.cc = PseudoCyclofeatureComplexityMetric()
+        self.cc = PseudoCyclofeatureComplexityFeature()
         self.cb = Codeblock()
         self.cb.disassembly_from_text(musl_exp10)
 

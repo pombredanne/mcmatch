@@ -5,14 +5,18 @@
 </head>
 <body>
 <h1>mxmatch - {{ title }}</h1>
-<a href="/repos">Browse repositories</a><br />
-Choose analysis type.
-<a href="/knn">K Nearest Neighbors</a><br />
-<br />
+<a href="/repos">Browse repositories</a> &middot; <a href="/fn_search">Browse functions</a><br />
+
+<h2>Loaded Code</h2>
+
 <a href="/update_code">set new code</a><br />
 {% if not code %}
 (no code loaded)
 {% else %}
+
+Choose analysis type.
+<a href="/knn">K Nearest Neighbors</a><br />
+<br />
 
 <h3>Current code</h3>
 <a href="#" onclick="toggle_visibility('code'); toggle_visibility('codetv');" id='codetv'>show</a>
